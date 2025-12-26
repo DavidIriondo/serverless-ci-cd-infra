@@ -9,8 +9,8 @@ terraform {
   }
 
   backend "s3" {
-      bucket = "scc-bucket-state"
-      key    = "terraform.tfstate"
-      region = "eu-north-1"
-    }
+    bucket = "scc-bucket-state"
+    key    = "terraform.tfstate"
+    region = "eu-north-1"
+  }
 }
