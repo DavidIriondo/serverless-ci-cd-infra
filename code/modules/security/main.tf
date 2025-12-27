@@ -57,14 +57,3 @@ resource "aws_iam_role_policy_attachment" "attach_push_images_to_ecr" {
   role       = aws_iam_role.ecr_and_ecs_role.name
   policy_arn = aws_iam_policy.push_images_to_ecr.arn
 }
-
-
-//Secrets to store ECR arn
-resource "aws_secretsmanager_secret" "frontend_ecr_arn" {
-  name = "scc-ecr-front-secret"
-}
-
-resource "aws_secretsmanager_secret_version" "ecr_front" {
-  secret_id     = aws_secretsmanager_secret.frontend_ecr_arn.id
-  secret_string = jsonencode(var.ecr_arn)
-}
