@@ -27,5 +27,6 @@ module "compute" {
 }
 
 module "security" {
-  source = "./modules/security"
+  source       = "./modules/security"
+  github_owner = var.github_owner
 }
