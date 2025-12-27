@@ -29,4 +29,8 @@ module "compute" {
 module "security" {
   source       = "./modules/security"
   github_owner = var.github_owner
+  ecr_arn = {
+    "ecrArnFront" : module.compute.ecr_for_frontend,
+    "ecrArnBack" : module.compute.ecr_for_backend
+  }
 }
