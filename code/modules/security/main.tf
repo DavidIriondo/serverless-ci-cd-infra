@@ -57,3 +57,56 @@ resource "aws_iam_role_policy_attachment" "attach_push_images_to_ecr" {
   role       = aws_iam_role.ecr_and_ecs_role.name
   policy_arn = aws_iam_policy.push_images_to_ecr.arn
 }
+
+
+//New role for execute containers in ecs
+//aws creates this role by default so lets create the same role to avoid runtime errors when
+// we'll applied changes
+resource "aws_iam_role" "ecs_task_execution" {
+  name               = "scc-ecs_task-execution"
+  assume_role_policy = data.aws_iam_policy_document.task_execution_data.json
+
+  tags = {
+    Name = "scc-github-actions-role"
+  }
+}
+
+data "aws_iam_policy_document" "task_execution_data" {
+  statement {
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage",
+      "logs:CreateLogStream",
+    "logs:PutLogEvents"]
+
+    resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "assume_task_execution_data" {
+  statement {
+    effect = ["allow"]
+    actions = [
+      "sts:AssumeRole"
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_policy" "assume_task_execution_policy" {
+  name        = "scc-assume-task-execution-policy"
+  description = "Who is allowed use this role"
+  policy      = data.aws_iam_policy_document.assume_task_execution_data.json
+}
+
+resource "aws_iam_role_policy_attachment" "assume_task_execution_policy_attach" {
+  role = aws_iam_role.ecs_task_execution.name
+  policy_arn = aws_iam_policy.assume_task_execution_policy.arn
+    
+}
