@@ -87,7 +87,7 @@ data "aws_iam_policy_document" "task_execution_data" {
 
 data "aws_iam_policy_document" "assume_task_execution_data" {
   statement {
-    effect = ["allow"]
+    effect = "Allow"
     actions = [
       "sts:AssumeRole"
     ]
@@ -106,7 +106,51 @@ resource "aws_iam_policy" "assume_task_execution_policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "assume_task_execution_policy_attach" {
-  role = aws_iam_role.ecs_task_execution.name
+  role       = aws_iam_role.ecs_task_execution.name
   policy_arn = aws_iam_policy.assume_task_execution_policy.arn
-    
+
+}
+
+
+//Security groups for ALB
+resource "aws_security_group" "alb_security_group" {
+  name        = "scc-alb-security-group"
+  description = "Control access to ALB"
+  vpc_id      = var.vpc
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allows_http" {
+  security_group_id = aws_security_group.alb_security_group.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "tcp"
+  from_port         = "80"
+  to_port           = "80"
+}
+
+resource "aws_vpc_security_group_egress_rule" "allows_alb_access_to_all_internet" {
+  security_group_id = aws_security_group.alb_security_group.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
+}
+
+
+//ECS Task security group
+resource "aws_security_group" "ecs_task_security_group" {
+  name        = "scc-ecs-security-group"
+  description = "Allow inbound access only from ALB"
+  vpc_id      = var.vpc
+}
+
+resource "aws_vpc_security_group_ingress_rule" "allows_access_from_alb" {
+  security_group_id            = aws_security_group.ecs_task_security_group.id
+  ip_protocol                  = "tcp"
+  from_port                    = "80"
+  to_port                      = "80"
+  referenced_security_group_id = aws_security_group.alb_security_group.arn
+}
+
+resource "aws_vpc_security_group_egress_rule" "allows_access_to_all_internet" {
+  security_group_id = aws_security_group.ecs_task_security_group.id
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
 }
