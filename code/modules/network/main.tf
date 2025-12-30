@@ -73,3 +73,47 @@ resource "aws_subnet" "alb_subnet_az_1_beta" {
     Name = "scc-alb-subnet-az-1b"
   }
 }
+
+//Nat for private subnets access to internet
+resource "aws_eip" "nat" {
+  domain = "vpc"
+
+  tags = {
+    Name = "scc-nat-eip"
+  }
+}
+
+resource "aws_nat_gateway" "main" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.alb_subnet_az_1_alfa.id
+
+  tags = {
+    Name = "scc-nat-gateway"
+  }
+
+  depends_on = [aws_internet_gateway.public_gateway]
+}
+
+//NAT for private subnets
+resource "aws_route_table" "nat_rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main.id
+  }
+
+  tags = {
+    Name = "scc-nat-rt"
+  }
+}
+
+//Route table association with private subnets
+resource "aws_route_table_association" "nat_association" {
+  for_each = {
+    back  = aws_subnet.back_subnet.id
+    front = aws_subnet.front_subnet.id
+  }
+  subnet_id      = each.value
+  route_table_id = aws_route_table.nat_rt.id
+}

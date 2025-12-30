@@ -42,6 +42,9 @@ data "aws_iam_policy_document" "push_images_to_ecr" {
     effect = "Allow"
     actions = [
       "ecr:*",
+      "ecs:*",
+      "logs:*",
+      "iam:PassRole"
     ]
     resources = ["*"]
   }
@@ -71,12 +74,9 @@ data "aws_iam_policy_document" "ecs_task_execution_permissions" {
   statement {
     effect = "Allow"
     actions = [
-      "ecr:GetAuthorizationToken",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
+      "ecr:*",
       "logs:CreateLogStream",
-      "logs:PutLogEvents"
+      "logs:PutLogEvents",
     ]
     resources = ["*"]
   }
@@ -84,7 +84,7 @@ data "aws_iam_policy_document" "ecs_task_execution_permissions" {
 
 data "aws_iam_policy_document" "ecs_task_execution_assume_role" {
   statement {
-    effect = "Allow"
+    effect  = "Allow"
     actions = ["sts:AssumeRole"]
 
     principals {
@@ -147,3 +147,5 @@ resource "aws_vpc_security_group_egress_rule" "allows_access_to_all_internet" {
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
 }
+
+

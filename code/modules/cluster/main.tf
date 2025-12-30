@@ -22,7 +22,7 @@ resource "aws_alb_target_group" "front" {
     protocol            = "HTTP"
     matcher             = "200"
     timeout             = "3"
-    path                = "/health"
+    path                = "/"
     unhealthy_threshold = "2"
   }
 }
@@ -40,7 +40,7 @@ resource "aws_alb_target_group" "back" {
     protocol            = "HTTP"
     matcher             = "200"
     timeout             = "3"
-    path                = "/health"
+    path                = "/back/health"
     unhealthy_threshold = "2"
   }
 }
@@ -66,7 +66,7 @@ resource "aws_alb_listener_rule" "alb_front_rule" {
 
   condition {
     path_pattern {
-      values = ["/front/*"]
+      values = ["/","/assets/*", "/env.js", "/vite.svg"]
     }
   }
 
@@ -177,19 +177,50 @@ locals {
     name           = "scc-frontend"
     image          = "public.ecr.aws/nginx/nginx:stable-alpine"
     aws_region     = "eu-north-1"
+    log_group      = "/ecs/scc-frontend"
     cpu            = 1024
     memory         = 2048
     container_port = 80
     host_port      = 80
+    BACKEND_URL    = aws_alb.main.dns_name
   })
 
   template_back = templatefile("${path.cwd}/templates/container_definition.json", {
     name           = "scc-backend"
     image          = "public.ecr.aws/nginx/nginx:stable-alpine"
     aws_region     = "eu-north-1"
+    log_group      = "/ecs/scc-backend"
     cpu            = 1024
     memory         = 2048
     container_port = 80
     host_port      = 80
+    BACKEND_URL    = ""
   })
 }
+
+
+//Logs resource front
+resource "aws_cloudwatch_log_group" "front_log_group" {
+  name              = "/ecs/scc-frontend"
+  retention_in_days = 14
+
+  tags = {
+    Name = "scc-front-log"
+  }
+}
+
+
+
+//Logs resource back
+resource "aws_cloudwatch_log_group" "back_log_group" {
+  name              = "/ecs/scc-backend"
+  retention_in_days = 14
+
+  tags = {
+    Name = "scc-back-log"
+  }
+}
+
+
+
+

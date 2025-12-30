@@ -18,6 +18,20 @@
                 "containerPort" : ${container_port},
                 "hostPort" : ${host_port}
             }
-        ]
+        ],
+        "environment": [
+            {
+                "name": "BASE_URL",
+                "value": "${BACKEND_URL}"
+            }
+        ],
+        "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+            "awslogs-group": "${log_group}",
+            "awslogs-region": "${aws_region}",
+            "awslogs-stream-prefix": "ecs"
+        }
+    }
     }
 ]

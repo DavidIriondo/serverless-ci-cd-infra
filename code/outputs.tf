@@ -16,12 +16,7 @@ output "github_actions_role_arn" {
   description = "Role arn to be used in github actions"
 }
 
-output "alb_hostname" {
-  value = module.cluster.alb_hostname
-  description = "ALB dns"
-}
-
 output "application_url" {
-  value = module.cluster.application_url
-  description = "URL to access the application"
+  value = module.cluster.alb_hostname
+  description = "URL to open the application"
 }
