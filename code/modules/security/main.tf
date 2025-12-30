@@ -63,34 +63,29 @@ resource "aws_iam_role_policy_attachment" "attach_push_images_to_ecr" {
 //aws creates this role by default so lets create the same role to avoid runtime errors when
 // we'll applied changes
 resource "aws_iam_role" "ecs_task_execution" {
-  name               = "scc-ecs_task-execution"
-  assume_role_policy = data.aws_iam_policy_document.task_execution_data.json
-
-  tags = {
-    Name = "scc-github-actions-role"
-  }
+  name               = "scc-ecs-task-execution"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_execution_assume_role.json
 }
 
-data "aws_iam_policy_document" "task_execution_data" {
+data "aws_iam_policy_document" "ecs_task_execution_permissions" {
   statement {
+    effect = "Allow"
     actions = [
       "ecr:GetAuthorizationToken",
       "ecr:BatchCheckLayerAvailability",
       "ecr:GetDownloadUrlForLayer",
       "ecr:BatchGetImage",
       "logs:CreateLogStream",
-    "logs:PutLogEvents"]
-
+      "logs:PutLogEvents"
+    ]
     resources = ["*"]
   }
 }
 
-data "aws_iam_policy_document" "assume_task_execution_data" {
+data "aws_iam_policy_document" "ecs_task_execution_assume_role" {
   statement {
     effect = "Allow"
-    actions = [
-      "sts:AssumeRole"
-    ]
+    actions = ["sts:AssumeRole"]
 
     principals {
       type        = "Service"
@@ -99,16 +94,14 @@ data "aws_iam_policy_document" "assume_task_execution_data" {
   }
 }
 
-resource "aws_iam_policy" "assume_task_execution_policy" {
-  name        = "scc-assume-task-execution-policy"
-  description = "Who is allowed use this role"
-  policy      = data.aws_iam_policy_document.assume_task_execution_data.json
+resource "aws_iam_policy" "ecs_task_execution_policy" {
+  name   = "scc-ecs-task-execution-policy"
+  policy = data.aws_iam_policy_document.ecs_task_execution_permissions.json
 }
 
-resource "aws_iam_role_policy_attachment" "assume_task_execution_policy_attach" {
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_attach" {
   role       = aws_iam_role.ecs_task_execution.name
-  policy_arn = aws_iam_policy.assume_task_execution_policy.arn
-
+  policy_arn = aws_iam_policy.ecs_task_execution_policy.arn
 }
 
 
@@ -146,7 +139,7 @@ resource "aws_vpc_security_group_ingress_rule" "allows_access_from_alb" {
   ip_protocol                  = "tcp"
   from_port                    = "80"
   to_port                      = "80"
-  referenced_security_group_id = aws_security_group.alb_security_group.arn
+  referenced_security_group_id = aws_security_group.alb_security_group.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "allows_access_to_all_internet" {
