@@ -66,7 +66,7 @@ resource "aws_alb_listener_rule" "alb_front_rule" {
 
   condition {
     path_pattern {
-      values = ["/","/assets/*", "/env.js", "/vite.svg"]
+      values = ["/", "/assets/*", "/env.js", "/vite.svg"]
     }
   }
 
@@ -126,10 +126,26 @@ resource "aws_ecs_task_definition" "backend" {
   }
 }
 
+//I'have added this variable in order to use a different task definition,
+//In case we have already create one with at CI/CD, because if we run this
+//project we will use the task definition defined here which is not probably what
+//we want when we will modify our front and back repositories
+locals {
+  front_task_definition = coalesce(
+    var.task_definition_front,
+    aws_ecs_task_definition.frontend.arn
+  )
+
+  back_task_definition = coalesce(
+    var.task_definition_back,
+    aws_ecs_task_definition.backend.arn
+  )
+}
+
 resource "aws_ecs_service" "frontend_service" {
   name            = "scc-frontend-service"
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.frontend.arn
+  task_definition = local.front_task_definition
   desired_count   = 1
   launch_type     = "FARGATE"
 
@@ -152,7 +168,7 @@ resource "aws_ecs_service" "frontend_service" {
 resource "aws_ecs_service" "backend_service" {
   name            = "scc-backend-service"
   cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.backend.arn
+  task_definition = local.back_task_definition
   desired_count   = 2
   launch_type     = "FARGATE"
 

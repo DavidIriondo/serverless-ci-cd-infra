@@ -32,3 +32,15 @@ variable "vpc" {
   type        = string
   description = "VPC id"
 }
+
+variable "task_definition_front" {
+  type        = string
+  description = "Frontend task defintion ARN to run cluster"
+  default     = null
+}
+
+variable "task_definition_back" {
+  type        = string
+  description = "Backend task defintion ARN to run cluster"
+  default     = null
+}
